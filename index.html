@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f6f1e8">
+<meta name="description" content="Private daily sales and financial tracker for Descanso Comida • Cafe.">
+<title>Descanso | Daily Sales Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" defer></script>
+<script src="config.js" defer></script>
+<script src="themes.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<div id="loginGate" class="login-shell">
+  <div class="login-decoration"><span class="login-orbit login-orbit-one"></span><span class="login-orbit login-orbit-two"></span><div class="login-mark"><img id="loginLogo" src="logos/1.png" alt="Descanso logo"></div><span class="login-stamp">PRIVATE<br>WORKSPACE</span></div>
+  <section class="login-card">
+    <div class="brand login-brand"><span class="brand-mark"><img id="loginBrandLogo" src="logos/1.png" alt="Descanso logo"></span><span><b>descanso</b><small>COMIDA • CAFE</small></span></div>
+    <span class="eyebrow">INTERNAL BUSINESS WORKSPACE</span>
+    <h1>Daily sales,<br><em>clearly tracked.</em></h1>
+    <p class="login-intro">Welcome to the Descanso Daily Sales Tracker. Sign in to record cashier funds, payments, expenses, stock losses, and daily reports.</p>
+    <form id="loginForm">
+      <label>Email address<input id="adminEmail" type="email" autocomplete="username" placeholder="Enter your administrator email" required></label>
+      <label>Password<input id="adminPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required></label>
+      <button class="button button-dark full" id="loginButton" type="submit">Sign in to your tracker <span>↗</span></button>
+    </form>
+    <p class="form-hint" id="loginMessage" role="status">This workspace is for authorized Descanso staff only.</p>
+    <div class="login-foot"><span class="dot"></span> Private access · Daily records · Offline-ready after sign-in</div>
+  </section>
+</div>
+
+<div id="appShell" hidden>
+  <div class="announcement"><span class="dot"></span> DESCANSO INTERNAL FINANCE WORKSPACE · PRIVATE ACCESS</div>
+  <header class="site-header">
+    <a class="brand" href="#overview" aria-label="Descanso Daily Sales Tracker home"><span class="brand-mark"><img id="brandLogo" src="logos/1.png" alt="Descanso logo"></span><span><b>descanso</b><small>DAILY SALES TRACKER</small></span></a>
+    <nav id="nav" aria-label="Main navigation">
+      <button class="nav-link active" data-view="overview">Overview</button>
+      <button class="nav-link" data-view="daily">Daily DST</button>
+      <button class="nav-link" data-view="reports">Reports &amp; Data</button>
+      <button class="nav-link" data-view="inventory">Inventory</button>
+      <button class="nav-link mobile-logout" id="logoutNavButton" type="button">Sign out</button>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeOpen" aria-label="Open theme settings" title="Theme settings">◐</button>
+      <button class="icon-btn" id="settingsOpen" aria-label="Open tracker settings" title="Tracker settings">⚙</button>
+      <button class="button button-outline logout-button" id="logoutButton">Sign out</button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="page-heading">
+      <div><span class="eyebrow" id="pageEyebrow">YOUR BUSINESS AT A GLANCE</span><h1 id="pageTitle">Daily overview <em>&amp; funds.</em></h1><p id="pageDescription">A clear view of today's sales, expenses, and cashier funds.</p></div>
+      <div class="page-heading-side"><span class="today-label">TODAY</span><strong id="todayLabel"></strong><span class="sync-inline" id="syncStatus"><span class="dot"></span> Checking connection…</span></div>
+    </section>
+
+    <section class="app-view" id="overviewView">
+      <div class="overview-toolbar"><div><span class="eyebrow">DAILY SNAPSHOT</span><h2>Today's <em>numbers</em></h2></div><div class="toolbar-actions"><label class="compact-label">View date<input type="date" id="overviewDate"></label><button class="button button-dark" id="openTodayDST">Open daily DST <span>↗</span></button></div></div>
+      <div class="metric-grid" id="overviewMetrics"></div>
+      <div class="overview-grid">
+        <article class="surface-card overview-feature">
+          <div class="card-heading"><div><span class="eyebrow">CASHIER SUMMARY</span><h3>Opening to <em>closing</em></h3></div><span class="soft-chip" id="overviewDayStatus">Not saved yet</span></div>
+          <div class="cash-summary-grid" id="overviewCashSummary"></div>
+          <div class="card-footnote">Opening and closing amounts are based on the denomination counts recorded in the daily DST.</div>
+        </article>
+        <article class="surface-card overview-feature">
+          <div class="card-heading"><div><span class="eyebrow">BUSINESS FUNDS</span><h3>Sales fund <em>snapshot</em></h3></div><span class="soft-chip">Flexible float</span></div>
+          <div class="fund-highlight"><span>Suggested sales fund</span><strong id="overviewSalesFund">₱0.00</strong></div>
+          <div class="mini-stat-list" id="overviewFundDetails"></div>
+          <button class="text-link" data-open-view="daily">Review today's funds and closing →</button>
+        </article>
+      </div>
+      <article class="surface-card recent-card">
+        <div class="card-heading"><div><span class="eyebrow">YOUR RECORDS</span><h3>Recent daily <em>trackers</em></h3></div><button class="text-link" data-open-view="reports">View all reports →</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Money received</th><th>Expenses</th><th>Net sales</th><th>Grab net sales</th><th></th></tr></thead><tbody id="recentDaysBody"></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="app-view" id="dailyView" hidden>
+      <div class="daily-toolbar surface-card">
+        <div><span class="eyebrow">DAILY SALES RECORD</span><h2>Daily <em>sales tracker</em></h2><p>One dated record per business day. You can return to edit it whenever needed.</p></div>
+        <div class="toolbar-actions"><label class="compact-label">DST date<input type="date" id="dstDate"></label><button class="button button-outline" id="newDST">New date</button><button class="button button-dark" id="saveDST">Save daily DST <span>✓</span></button></div>
+      </div>
+      <div class="daily-layout">
+        <div class="daily-main-column">
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">01</span><div><span class="eyebrow">CASH ON HAND</span><h3>Opening <em>cash count</em></h3><p>Count the money already inside the cashier before the business opens.</p></div></div><span class="amount-pill" id="openingTotal">₱0.00</span></div>
+            <div class="denomination-grid" id="openingDenominations"></div>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">02</span><div><span class="eyebrow">PAYMENTS RECEIVED</span><h3>Cash <em>payments</em></h3><p>Record the order number and the amount actually received in cash.</p></div></div><button class="button button-outline add-row" data-add-row="cashPayments">+ Add payment</button></div>
+            <div class="entry-list" id="cashPaymentsList"></div><div class="list-total"><span>Total cash payments</span><strong id="cashPaymentsTotal">₱0.00</strong></div>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">03</span><div><span class="eyebrow">DIGITAL PAYMENTS</span><h3>Online <em>payments</em></h3><p>Record GCash, Maya, bank transfers, or other online payments with their order numbers.</p></div></div><button class="button button-outline add-row" data-add-row="onlinePayments">+ Add payment</button></div>
+            <div class="entry-list" id="onlinePaymentsList"></div><div class="list-total"><span>Total online payments</span><strong id="onlinePaymentsTotal">₱0.00</strong></div>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">04</span><div><span class="eyebrow">DELIVERY CHANNEL</span><h3>Grab delivery <em>orders</em></h3><p>Track each Grab order separately using its order number and order amount.</p></div></div><button class="button button-outline add-row" data-add-row="grabOrders">+ Add Grab order</button></div>
+            <div class="entry-list" id="grabOrdersList"></div><div class="list-total"><span>Grab order total</span><strong id="grabOrdersTotal">₱0.00</strong></div>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">05</span><div><span class="eyebrow">MONEY RETURNED</span><h3>Refunds</h3><p>Record the original order number, refund channel, and amount returned.</p></div></div><button class="button button-outline add-row" data-add-row="refunds">+ Add refund</button></div>
+            <div class="entry-list" id="refundsList"></div><div class="list-total negative-total"><span>Total refunds</span><strong id="refundsTotal">₱0.00</strong></div>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">06</span><div><span class="eyebrow">BUSINESS SPENDING</span><h3>Expenses &amp; <em>petty cash</em></h3><p>Petty cash is optional. Use it only when an expense is paid directly from the cashier because the sales fund is not enough.</p></div></div><button class="button button-outline add-row" data-add-row="expenses">+ Add expense</button></div>
+            <div class="entry-list" id="expensesList"></div><div class="list-total negative-total"><span>Total expenses</span><strong id="expensesTotal">₱0.00</strong></div><div class="expense-note"><strong>Petty cash total:</strong> <span id="pettyCashTotal">₱0.00</span> <small>Only expenses marked “Cashier / petty cash” are included.</small></div>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">07</span><div><span class="eyebrow">PRICE ADJUSTMENTS</span><h3>Discounts</h3><p>Keep a record of discounts granted, including the order number and reason.</p></div></div><button class="button button-outline add-row" data-add-row="discounts">+ Add discount</button></div>
+            <div class="entry-list" id="discountsList"></div><div class="list-total"><span>Total discounts recorded</span><strong id="discountsTotal">₱0.00</strong></div>
+            <p class="helper-note">Enter payment amounts as the actual amount collected after discounts. Discounts are shown separately and are not deducted twice from net sales.</p>
+          </article>
+
+          <article class="surface-card form-section">
+            <div class="section-title-row"><div><span class="step-number">08</span><div><span class="eyebrow">WASTE &amp; STOCK CONTROL</span><h3>Loss <em>tracker</em></h3><p>Record burnt, spoiled, damaged, or discarded food. Recorded losses are deducted from available stock.</p></div></div><button class="button button-outline add-row" data-add-row="losses">+ Add loss</button></div>
+            <div class="entry-list" id="lossesList"></div><div class="list-total negative-total"><span>Estimated stock loss value</span><strong id="lossesTotal">₱0.00</strong></div><p class="helper-note">Add food items in Inventory first so they appear in this dropdown.</p>
+          </article>
+
+          <article class="surface-card form-section closing-section">
+            <div class="section-title-row"><div><span class="step-number">09</span><div><span class="eyebrow">END-OF-DAY COUNT</span><h3>Closing <em>cash count</em></h3><p>Count the physical cash remaining in the cashier after any cash transfer to the sales fund.</p></div></div><span class="amount-pill" id="closingTotal">₱0.00</span></div>
+            <div class="denomination-grid" id="closingDenominations"></div>
+            <div class="closing-options">
+              <label>Cash moved from cashier to sales fund (₱)<input type="number" id="cashToSalesFund" min="0" step="0.01" placeholder="Enter actual amount, if any"></label>
+              <label>Cash to leave for the next day's opening (₱)<input type="number" id="nextOpeningFloat" min="0" step="0.01" placeholder="3,000.00"></label>
+            </div>
+            <div class="reconciliation-grid" id="cashReconciliation"></div>
+          </article>
+          <article class="surface-card form-section"><div class="section-title-row"><div><span class="eyebrow">DAILY NOTES</span><h3>Additional <em>remarks</em></h3><p>Optional notes about unusual transactions, adjustments, or cashier handover.</p></div></div><textarea class="notes-input" id="dayNotes" rows="3" placeholder="Add notes for this DST…"></textarea></article>
+          <div class="daily-save-bar"><span id="dailySaveHint">Changes are saved locally as you work.</span><button class="button button-dark" id="saveDSTBottom">Save daily DST <span>✓</span></button></div>
+        </div>
+
+        <aside class="daily-side-column">
+          <article class="surface-card sticky-summary"><span class="eyebrow">LIVE COMPUTATION</span><h3>Daily <em>summary</em></h3><div class="summary-line"><span>Opening cash</span><strong id="sumOpening">₱0.00</strong></div><div class="summary-line"><span>Cash payments</span><strong id="sumCash">₱0.00</strong></div><div class="summary-line"><span>Online payments</span><strong id="sumOnline">₱0.00</strong></div><div class="summary-line"><span>Grab orders</span><strong id="sumGrab">₱0.00</strong></div><div class="summary-line negative"><span>Refunds</span><strong id="sumRefunds">−₱0.00</strong></div><div class="summary-line"><span>Discounts recorded</span><strong id="sumDiscounts">₱0.00</strong></div><div class="summary-line negative"><span>Expenses</span><strong id="sumExpenses">−₱0.00</strong></div><div class="summary-divider"></div><div class="summary-total"><span>NET SALES</span><strong id="sumNetSales">₱0.00</strong></div><div class="summary-line"><span>Grab delivery net sales</span><strong id="sumGrabNet">₱0.00</strong></div><div class="summary-line"><span>Petty cash used</span><strong id="sumPettyCash">₱0.00</strong></div><div class="summary-divider"></div><div class="fund-result"><span>Funds after expenses</span><strong id="sumFundsAfterExpenses">₱0.00</strong><small>Opening cash + net sales + Grab net sales − expenses</small></div><div class="fund-result accent-result"><span>Suggested sales fund</span><strong id="sumSalesFund">₱0.00</strong><small>Funds after expenses − next opening float</small></div><div class="summary-footnote">The sales fund estimate is flexible. Change the next opening float or record a different actual cash transfer whenever needed.</div>
+          </article>
+          <article class="surface-card side-help"><span class="eyebrow">A QUICK REMINDER</span><h3>Keep each day <em>balanced.</em></h3><p>Opening and closing cash are physical cashier counts. Online and Grab payments are tracked separately. Petty cash is only counted when money is taken directly from the cashier.</p><button class="text-link" data-open-view="inventory">Manage available stocks →</button></article>
+        </aside>
+      </div>
+    </section>
+
+    <section class="app-view" id="reportsView" hidden>
+      <div class="reports-toolbar surface-card"><div><span class="eyebrow">HISTORY &amp; PERFORMANCE</span><h2>Reports <em>&amp; data</em></h2><p>Review yearly totals, monthly performance, and individual daily sales trackers.</p></div><div class="toolbar-actions"><label class="compact-label">Report year<select id="reportYear"></select></label><button class="button button-outline" id="exportYearCSV">Export year CSV ↓</button><button class="button button-dark" id="exportBackup">Backup all data ↓</button></div></div>
+      <div class="metric-grid report-metrics" id="yearMetrics"></div>
+      <article class="surface-card report-table-card"><div class="card-heading"><div><span class="eyebrow">YEARLY BREAKDOWN</span><h3>Monthly <em>performance</em></h3></div><span class="soft-chip" id="reportYearLabel"></span></div><div class="table-wrap"><table><thead><tr><th>Month</th><th>Daily DST records</th><th>Money received</th><th>Expenses</th><th>Net sales</th><th>Grab net sales</th><th></th></tr></thead><tbody id="monthlyReportBody"></tbody></table></div></article>
+      <article class="surface-card report-table-card" id="monthDetailCard" hidden><div class="card-heading"><div><span class="eyebrow">MONTH DETAILS</span><h3 id="monthDetailTitle">Daily <em>records</em></h3></div><button class="text-link" id="closeMonthDetails">Close details ×</button></div><div class="table-wrap"><table><thead><tr><th>DST date</th><th>Opening cash</th><th>Money received</th><th>Expenses</th><th>Net sales</th><th>Grab net sales</th><th></th></tr></thead><tbody id="monthDaysBody"></tbody></table></div></article>
+      <article class="surface-card data-tools-card"><div><span class="eyebrow">YOUR DATA, YOUR CONTROL</span><h3>Backup &amp; <em>restore</em></h3><p>Export a JSON backup before changing devices. Restoring a backup merges daily records by date and transaction ID instead of duplicating them.</p></div><div class="data-tool-actions"><button class="button button-outline" id="exportBackupSecondary">Download JSON backup</button><label class="button button-outline file-button">Restore JSON backup<input type="file" id="importBackup" accept="application/json"></label></div><p class="form-hint" id="backupMessage" role="status"></p></article>
+    </section>
+
+    <section class="app-view" id="inventoryView" hidden>
+      <div class="inventory-toolbar surface-card"><div><span class="eyebrow">STOCK &amp; FOOD CONTROL</span><h2>Available <em>stocks</em></h2><p>Maintain the food dropdown used by the loss tracker. Stock losses recorded in a daily DST are deducted automatically.</p></div></div>
+      <article class="surface-card inventory-add-card"><div class="card-heading"><div><span class="eyebrow">ADD A FOOD ITEM</span><h3>Stock <em>list</em></h3></div></div><form id="addInventoryForm" class="inventory-add-form"><label>Food / stock name<input id="inventoryName" required placeholder="e.g. Chicken breast"></label><label>Unit<select id="inventoryUnit"><option value="pcs">Pieces (pcs)</option><option value="kg">Kilograms (kg)</option><option value="g">Grams (g)</option><option value="packs">Packs</option><option value="bottles">Bottles</option><option value="sachets">Sachets</option><option value="servings">Servings</option><option value="other">Other</option></select></label><label>Starting quantity<input id="inventoryQty" type="number" min="0" step="0.01" value="0"></label><label>Unit cost (₱)<input id="inventoryCost" type="number" min="0" step="0.01" value="0"></label><label>Low-stock alert at<input id="inventoryLow" type="number" min="0" step="0.01" value="5"></label><button class="button button-dark" type="submit">+ Add to stock list</button></form></article>
+      <div class="inventory-summary" id="inventorySummary"></div>
+      <article class="surface-card inventory-list-card"><div class="card-heading"><div><span class="eyebrow">CURRENT INVENTORY</span><h3>Stock <em>availability</em></h3></div><span class="soft-chip" id="inventoryCount">0 items</span></div><div class="table-wrap"><table><thead><tr><th>Food / stock item</th><th>Current stock</th><th>Unit</th><th>Unit cost</th><th>Low-stock level</th><th>Restock</th><th></th></tr></thead><tbody id="inventoryBody"></tbody></table></div><p class="helper-note">To restock, enter the additional quantity in the Restock column. Historical losses remain recorded in their original daily DST.</p></article>
+    </section>
+  </main>
+
+  <footer class="app-footer"><a class="brand footer-brand" href="#overview"><span class="brand-mark"><img id="footerLogo" src="logos/1.png" alt="Descanso logo"></span><span><b>descanso</b><small>DAILY SALES TRACKER</small></span></a><span>Private business records · Keep your daily numbers in balance.</span><span id="footerUser"></span></footer>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="sync-pill" id="syncPill"><span class="dot"></span><span id="syncPillText">Checking sync…</span></div>
+
+<div class="modal-backdrop" id="themeModal" hidden><section class="admin-modal theme-modal" role="dialog" aria-modal="true" aria-labelledby="themeTitle"><button class="modal-close" id="themeClose" aria-label="Close">×</button><span class="eyebrow">MAKE IT YOURS</span><h2 id="themeTitle">Theme <em>settings</em></h2><p class="muted">Choose the black-and-white default or any of the 50 original Descanso palettes. Your selection is saved on this device.</p><label for="themeSelect">Choose a theme</label><select id="themeSelect" class="theme-select"></select><div class="theme-preview" id="themePreview"><div class="theme-swatches" id="themeSwatches"></div><div><strong id="themeName">Black &amp; White</strong><small id="themeCollection">Default collection</small></div><span id="themeNumber">DEFAULT / 51</span></div><div class="editor-actions"><button class="button button-outline" id="resetTheme">Reset theme</button><button class="button button-dark" id="applyTheme">Apply theme</button></div></section></div>
+
+<div class="modal-backdrop" id="settingsModal" hidden><section class="admin-modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><button class="modal-close" id="settingsClose" aria-label="Close">×</button><span class="eyebrow">TRACKER PREFERENCES</span><h2 id="settingsTitle">Business <em>settings</em></h2><p class="muted">These settings are saved with your private tracker and can be changed whenever the business needs them.</p><label>Business name<input id="businessName" type="text" placeholder="Descanso Comida • Cafe"></label><label>Default next-day opening cash / float (₱)<input id="defaultFloat" type="number" min="0" step="0.01" placeholder="3000"></label><p class="field-note">This is only a suggested default. You can change the amount separately for every daily DST.</p><div class="editor-actions"><button class="button button-outline" id="cancelSettings">Cancel</button><button class="button button-dark" id="saveSettings">Save settings</button></div></section></div>
+
+</body>
+</html>
